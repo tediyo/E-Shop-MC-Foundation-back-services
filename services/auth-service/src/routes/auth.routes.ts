@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
+import { userController } from '../controllers/user.controller';
 import { validateRequest } from '../middleware/validateRequest';
 import { authValidation } from '../validations/auth.validation';
 import { rateLimit } from 'express-rate-limit';
@@ -53,17 +54,6 @@ router.post('/reset-password',
   authController.resetPassword
 );
 
-router.post('/verify-email',
-  validateRequest(authValidation.verifyEmail),
-  authController.verifyEmail
-);
-
-router.post('/resend-verification',
-  authLimiter,
-  validateRequest(authValidation.resendVerification),
-  authController.resendVerification
-);
-
 router.post('/logout',
   validateRequest(authValidation.logout),
   authController.logout
@@ -73,48 +63,6 @@ router.post('/logout',
 router.get('/me',
   authController.authenticate,
   authController.getProfile
-);
-
-router.put('/profile',
-  authController.authenticate,
-  validateRequest(authValidation.updateProfile),
-  authController.updateProfile
-);
-
-router.put('/change-password',
-  authController.authenticate,
-  validateRequest(authValidation.changePassword),
-  authController.changePassword
-);
-
-router.post('/enable-2fa',
-  authController.authenticate,
-  validateRequest(authValidation.enable2FA),
-  authController.enable2FA
-);
-
-router.post('/verify-2fa',
-  authController.authenticate,
-  validateRequest(authValidation.verify2FA),
-  authController.verify2FA
-);
-
-router.post('/disable-2fa',
-  authController.authenticate,
-  validateRequest(authValidation.disable2FA),
-  authController.disable2FA
-);
-
-router.post('/send-verification-code',
-  authController.authenticate,
-  validateRequest(authValidation.sendVerificationCode),
-  authController.sendVerificationCode
-);
-
-router.post('/verify-phone',
-  authController.authenticate,
-  validateRequest(authValidation.verifyPhone),
-  authController.verifyPhone
 );
 
 // Admin routes (admin role required)

@@ -23,6 +23,19 @@ export const authValidation = {
     phone: Joi.string().pattern(/^\+?[\d\s-()]+$/).optional().messages({
       'string.pattern.base': 'Please provide a valid phone number',
     }),
+    dateOfBirth: Joi.date().max('now').optional().messages({
+      'date.max': 'Date of birth cannot be in the future',
+    }),
+    gender: Joi.string().valid('male', 'female', 'other').optional().messages({
+      'any.only': 'Gender must be male, female, or other',
+    }),
+    address: Joi.object({
+      street: Joi.string().optional(),
+      city: Joi.string().optional(),
+      state: Joi.string().optional(),
+      country: Joi.string().optional(),
+      zipCode: Joi.string().optional(),
+    }).optional(),
   }),
 
   login: Joi.object({

@@ -2,8 +2,9 @@ import { createClient, RedisClientType } from 'redis';
 import { logger } from '../utils/logger';
 
 let redisClient: RedisClientType;
+let isConnected = false;
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_URL = process.env['REDIS_URL'] || 'redis://localhost:6379';
 
 export const connectRedis = async (): Promise<void> => {
   try {
@@ -11,25 +12,17 @@ export const connectRedis = async (): Promise<void> => {
       url: REDIS_URL,
       socket: {
         connectTimeout: 10000,
-        lazyConnect: true,
       },
     });
 
-    // Handle Redis events
-    redisClient.on('error', (error) => {
-      logger.error('Redis Client Error:', error);
+    redisClient.on('error', (err) => {
+      logger.error('Redis Client Error:', err);
+      isConnected = false;
     });
 
     redisClient.on('connect', () => {
       logger.info('Redis Client Connected');
-    });
-
-    redisClient.on('ready', () => {
-      logger.info('Redis Client Ready');
-    });
-
-    redisClient.on('end', () => {
-      logger.warn('Redis Client Connection Ended');
+      isConnected = true;
     });
 
     redisClient.on('reconnecting', () => {
@@ -38,85 +31,81 @@ export const connectRedis = async (): Promise<void> => {
 
     await redisClient.connect();
     logger.info('Redis connected successfully');
-
+    isConnected = true;
   } catch (error) {
-    logger.error('Error connecting to Redis:', error);
-    throw error;
+    logger.error('Redis connection error:', error);
+    isConnected = false;
+    // Don't exit process, just log the error
   }
 };
 
 export const getRedisClient = (): RedisClientType => {
-  if (!redisClient) {
+  if (!redisClient || !isConnected) {
     throw new Error('Redis client not initialized. Call connectRedis() first.');
   }
   return redisClient;
 };
 
 export const disconnectRedis = async (): Promise<void> => {
-  try {
-    if (redisClient) {
-      await redisClient.quit();
-      logger.info('Redis connection closed');
-    }
-  } catch (error) {
-    logger.error('Error closing Redis connection:', error);
-    throw error;
+  if (redisClient && isConnected) {
+    await redisClient.disconnect();
+    isConnected = false;
+    logger.info('Redis disconnected');
   }
 };
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  try {
-    await disconnectRedis();
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during Redis connection closure:', error);
-    process.exit(1);
+// Safe Redis operations that work without Redis
+export const setKey = async (key: string, value: string, ttl?: number): Promise<void> => {
+  if (!isConnected) {
+    logger.warn(`Redis not connected, skipping setKey: ${key}`);
+    return;
   }
-});
-
-// Utility functions for common Redis operations
-export const setKey = async (key: string, value: string, expireSeconds?: number): Promise<void> => {
   try {
-    const client = getRedisClient();
-    if (expireSeconds) {
-      await client.setEx(key, expireSeconds, value);
+    if (ttl) {
+      await redisClient.setEx(key, ttl, value);
     } else {
-      await client.set(key, value);
+      await redisClient.set(key, value);
     }
   } catch (error) {
-    logger.error('Error setting Redis key:', error);
-    throw error;
+    logger.error('Redis setKey error:', error);
   }
 };
 
 export const getKey = async (key: string): Promise<string | null> => {
+  if (!isConnected) {
+    logger.warn(`Redis not connected, skipping getKey: ${key}`);
+    return null;
+  }
   try {
-    const client = getRedisClient();
-    return await client.get(key);
+    return await redisClient.get(key);
   } catch (error) {
-    logger.error('Error getting Redis key:', error);
-    throw error;
+    logger.error('Redis getKey error:', error);
+    return null;
   }
 };
 
 export const deleteKey = async (key: string): Promise<void> => {
+  if (!isConnected) {
+    logger.warn(`Redis not connected, skipping deleteKey: ${key}`);
+    return;
+  }
   try {
-    const client = getRedisClient();
-    await client.del(key);
+    await redisClient.del(key);
   } catch (error) {
-    logger.error('Error deleting Redis key:', error);
-    throw error;
+    logger.error('Redis deleteKey error:', error);
   }
 };
 
 export const keyExists = async (key: string): Promise<boolean> => {
+  if (!isConnected) {
+    logger.warn(`Redis not connected, skipping keyExists: ${key}`);
+    return false;
+  }
   try {
-    const client = getRedisClient();
-    const exists = await client.exists(key);
-    return exists === 1;
+    const result = await redisClient.exists(key);
+    return result === 1;
   } catch (error) {
-    logger.error('Error checking Redis key existence:', error);
-    throw error;
+    logger.error('Redis keyExists error:', error);
+    return false;
   }
 };

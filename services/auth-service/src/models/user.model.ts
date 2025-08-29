@@ -174,12 +174,12 @@ const userSchema = new Schema<IUser>({
   timestamps: true,
   toJSON: {
     transform: function(doc, ret) {
-      delete ret.password;
-      delete ret.passwordResetToken;
-      delete ret.passwordResetExpires;
-      delete ret.emailVerificationToken;
-      delete ret.emailVerificationExpires;
-      delete ret.twoFactorSecret;
+      delete (ret as any).password;
+      delete (ret as any).passwordResetToken;
+      delete (ret as any).passwordResetExpires;
+      delete (ret as any).emailVerificationToken;
+      delete (ret as any).emailVerificationExpires;
+      delete (ret as any).twoFactorSecret;
       return ret;
     },
   },
