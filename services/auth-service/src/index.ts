@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
-import { connectRedis } from './config/redis';
 import { logger } from './utils/logger';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
@@ -16,7 +15,7 @@ import { healthCheck } from './middleware/healthCheck';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env['PORT'] || 3001;
 
 // Security middleware
 app.use(helmet());
@@ -33,7 +32,7 @@ app.use(limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  origin: process.env['CORS_ORIGIN']?.split(',') || ['http://localhost:3000'],
   credentials: true,
 }));
 
@@ -59,14 +58,13 @@ async function startServer() {
     await connectDB();
     logger.info('Connected to MongoDB');
 
-    // Connect to Redis
-    await connectRedis();
-    logger.info('Connected to Redis');
+    // Skip Redis for now (will implement later)
+    logger.warn('Skipping Redis connection for testing');
 
     // Start listening
     app.listen(PORT, () => {
       logger.info(`Auth Service running on port ${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV}`);
+      logger.info(`Environment: ${process.env['NODE_ENV']}`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

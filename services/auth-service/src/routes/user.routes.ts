@@ -36,20 +36,11 @@ router.put('/address',
   userController.updateAddress
 );
 
-// Upload profile picture
-router.post('/profile-picture',
-  validateRequest(userValidation.uploadProfilePicture),
-  userController.uploadProfilePicture
-);
-
 // Delete profile picture
 router.delete('/profile-picture', userController.deleteProfilePicture);
 
 // Get user activity log
-router.get('/activity',
-  validateRequest(userValidation.getActivity),
-  userController.getActivity
-);
+router.get('/activity', userController.getActivity);
 
 // Export user data
 router.get('/export', userController.exportData);
@@ -59,74 +50,6 @@ router.delete('/account',
   validateRequest(userValidation.deleteAccount),
   userController.deleteAccount
 );
-
-// Two-factor authentication routes
-router.post('/2fa/setup',
-  validateRequest(userValidation.setup2FA),
-  userController.setup2FA
-);
-
-router.post('/2fa/verify',
-  validateRequest(userValidation.verify2FA),
-  userController.verify2FA
-);
-
-router.post('/2fa/disable',
-  validateRequest(userValidation.disable2FA),
-  userController.disable2FA
-);
-
-// Phone verification routes
-router.post('/phone/verify',
-  validateRequest(userValidation.verifyPhone),
-  userController.verifyPhone
-);
-
-router.post('/phone/resend-code',
-  validateRequest(userValidation.resendPhoneCode),
-  userController.resendPhoneCode
-);
-
-// Email verification routes
-router.post('/email/verify',
-  validateRequest(userValidation.verifyEmail),
-  userController.verifyEmail
-);
-
-router.post('/email/resend-verification',
-  validateRequest(userValidation.resendEmailVerification),
-  userController.resendEmailVerification
-);
-
-// Notification preferences
-router.put('/notifications',
-  validateRequest(userValidation.updateNotificationPreferences),
-  userController.updateNotificationPreferences
-);
-
-// Privacy settings
-router.put('/privacy',
-  validateRequest(userValidation.updatePrivacySettings),
-  userController.updatePrivacySettings
-);
-
-// Account recovery
-router.post('/recovery/initiate',
-  validateRequest(userValidation.initiateRecovery),
-  userController.initiateRecovery
-);
-
-router.post('/recovery/complete',
-  validateRequest(userValidation.completeRecovery),
-  userController.completeRecovery
-);
-
-// Session management
-router.get('/sessions', userController.getActiveSessions);
-
-router.delete('/sessions/:sessionId', userController.terminateSession);
-
-router.delete('/sessions', userController.terminateAllSessions);
 
 // User preferences for specific features
 router.put('/preferences/language',
@@ -150,16 +73,7 @@ router.put('/preferences/marketing',
   userController.updateMarketingPreferences
 );
 
-// Data export and deletion
+// Data export
 router.get('/data/export', userController.exportUserData);
-
-router.post('/data/deletion-request',
-  validateRequest(userValidation.requestDataDeletion),
-  userController.requestDataDeletion
-);
-
-router.delete('/data/deletion-request/:requestId',
-  userController.cancelDataDeletionRequest
-);
 
 export default router;

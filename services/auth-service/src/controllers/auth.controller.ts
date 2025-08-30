@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User, IUser } from '../models/user.model';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwt';
-import { setKey, deleteKey } from '../config/redis';
+import { setKey, deleteKey, getKey } from '../config/redis';
 import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -44,18 +44,18 @@ export const authController = {
 
       // Generate tokens
       const accessToken = generateAccessToken({
-        userId: user._id.toString(),
+        userId: (user as any)._id.toString(),
         email: user.email,
         role: user.role,
       });
 
       const refreshToken = generateRefreshToken({
-        userId: user._id.toString(),
+        userId: (user as any)._id.toString(),
         tokenId: uuidv4(),
       });
 
       // Store refresh token in Redis
-      await setKey(`refresh_token:${user._id}`, refreshToken, 7 * 24 * 60 * 60); // 7 days
+      await setKey(`refresh_token:${(user as any)._id}`, refreshToken, 7 * 24 * 60 * 60); // 7 days
 
       logger.info(`User registered successfully: ${user.email}`);
 
@@ -64,7 +64,7 @@ export const authController = {
         message: 'User registered successfully',
         data: {
           user: {
-            id: user._id,
+            id: (user as any)._id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -124,18 +124,18 @@ export const authController = {
 
       // Generate tokens
       const accessToken = generateAccessToken({
-        userId: user._id.toString(),
+        userId: (user as any)._id.toString(),
         email: user.email,
         role: user.role,
       });
 
       const refreshToken = generateRefreshToken({
-        userId: user._id.toString(),
+        userId: (user as any)._id.toString(),
         tokenId: uuidv4(),
       });
 
       // Store refresh token in Redis
-      await setKey(`refresh_token:${user._id}`, refreshToken, 7 * 24 * 60 * 60); // 7 days
+      await setKey(`refresh_token:${(user as any)._id}`, refreshToken, 7 * 24 * 60 * 60); // 7 days
 
       logger.info(`User logged in successfully: ${user.email}`);
 
@@ -144,7 +144,7 @@ export const authController = {
         message: 'Login successful',
         data: {
           user: {
-            id: user._id,
+            id: (user as any)._id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -180,7 +180,7 @@ export const authController = {
       const decoded = verifyToken(refreshToken) as any;
       
       // Check if refresh token exists in Redis
-      const storedToken = await setKey(`refresh_token:${decoded.userId}`, '', 0);
+      const storedToken = await getKey(`refresh_token:${decoded.userId}`);
       if (!storedToken) {
         res.status(401).json({
           success: false,
@@ -203,7 +203,7 @@ export const authController = {
 
       // Generate new access token
       const newAccessToken = generateAccessToken({
-        userId: user._id.toString(),
+        userId: (user as any)._id.toString(),
         email: user.email,
         role: user.role,
       });
